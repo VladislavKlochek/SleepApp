@@ -12,3 +12,5 @@ val Pink40 = Color(0xFF7D5260)
 
 val PurpleDark = Color(0xFF382C5C)
 val InformationCardColor = Color(0xFF754486)
+val noteCardColor = Color(0xFFC2B2EF)
+val noteCardTagsBackgroundColor = Color(0xFFA28FDB)
