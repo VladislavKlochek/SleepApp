@@ -1,5 +1,6 @@
 package com.example.sleepapp.notesscreen
 
+import android.icu.text.DateFormat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,40 +23,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextIndent
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.widget.TextViewCompat.AutoSizeTextType
 import com.example.sleepapp.R
 import com.example.sleepapp.ui.theme.noteCardColor
 import com.example.sleepapp.ui.theme.noteCardTagsBackgroundColor
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 @Composable
-fun NoteItem() {
-    val items = listOf(
-        "tag1",
-        "tag2",
-        "tag3",
-        "tag4",
-        "tag5",
-        "tag2",
-        "tag3",
-        "tag4",
-        "tag5",
-        "tag2",
-        "tag3",
-        "tag4",
-        "tag5",
-        "tag2",
-        "tag3",
-        "tag4",
-        "tag5",
-        "tag2",
-        "tag3",
-        "tag4",
-        "tag5"
-    )
+fun NoteItem(note: note) {
+    val formatter = SimpleDateFormat("dd.MM.yyyy", Locale.ROOT)
     Card(
         modifier = Modifier
             .sizeIn(200.dp, 200.dp)
@@ -75,35 +62,42 @@ fun NoteItem() {
                                     .padding(25.dp, 0.dp, 0.dp, 0.dp),
                                 content = {
                                     Text(
-                                        text = "27.07.2023",
+                                        text = formatter
+                                            .format(note.date),
                                         fontSize = 20.sp,
-                                        fontWeight = FontWeight.Thin,
+                                        fontWeight = FontWeight.Medium,
                                         color = Color.Black
                                     )
                                 },
                                 contentAlignment = Alignment.TopStart
                             );
                             Box(
-                                modifier = Modifier.fillMaxWidth(0.6f),
+                                modifier = Modifier.fillMaxWidth(),
                                 content = {
+
                                     Text(
-                                        text = "Название",
+                                        text = note.noteName,
                                         fontSize = 20.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.Black
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color.Black,
+                                        textAlign = TextAlign.Center,
+
                                     )
+
+
                                 },
-                                contentAlignment = Alignment.BottomEnd
+                                contentAlignment = Alignment.BottomCenter
                             );
 
                         },
-                        /*horizontalArrangement = Arrangement.SpaceAround*/
                     );
                     Text(
-                        text = "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq",
-                        modifier = Modifier.padding(10.dp),
+                        text = note.text,
+                        modifier = Modifier.padding(0.dp, 10.dp, 10.dp, 10.dp),
                         maxLines = 5,
-                        color = Color.Black
+                        color = Color.Black,
+                        overflow = TextOverflow.Ellipsis,
+                        style = TextStyle(textIndent = TextIndent(50.sp, 25.sp))
                     )
                     Row(
                         content = {
@@ -117,41 +111,36 @@ fun NoteItem() {
 
                                 LazyRow(
                                     content = {
-                                        itemsIndexed(items) { index, item ->
+                                        itemsIndexed(note.tags) { index, item ->
                                             Text(
-                                                text = item,
+                                                AnnotatedString(text = item + if (index < note.tags.size - 1) ", " else ""),
                                                 color = Color.Blue,
-                                                modifier = Modifier.padding(5.dp)
+                                                modifier = Modifier.padding(0.dp, 5.dp, 0.dp, 5.dp)
                                             )
                                         }
                                     },
                                     modifier = Modifier.background(noteCardTagsBackgroundColor)
                                 )
                             }
-                            Row(modifier = Modifier.padding(15.dp,0.dp,15.dp,0.dp).fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.coffee_icon),
-                                    contentDescription = null,
-
-                                )
-                                Image(
-                                    painter = painterResource(id = R.drawable.alcohol_icon),
-                                    contentDescription = null,
-
-                                )
+                            Row(
+                                modifier = Modifier
+                                    .padding(15.dp, 0.dp, 15.dp, 0.dp)
+                                    .fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                if (note.coffee) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.coffee_icon),
+                                        contentDescription = null,
+                                        )
+                                }
+                                if (note.alcohol) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.alcohol_icon),
+                                        contentDescription = null,
+                                        )
+                                }
                             }
-                            /*Box(modifier = Modifier.fillMaxWidth(0.5f), contentAlignment = Alignment.BottomEnd){
-                                Image(
-                                    painter = painterResource(id = R.drawable.coffee_icon),
-                                    contentDescription = null,
-                                )
-                            }
-                            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.BottomEnd){
-                                Image(
-                                    painter = painterResource(id = R.drawable.alcohol_icon),
-                                    contentDescription = null,
-                                )
-                            }*/
                         }
                     )
                 }
