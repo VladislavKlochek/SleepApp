@@ -1,3 +1,5 @@
+package com.example.sleepapp.bottomnavigation
+
 import com.example.sleepapp.R
 
 sealed class BottomItem(val title: String, val iconId: Int, val route: String){
