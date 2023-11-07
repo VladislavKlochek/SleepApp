@@ -41,7 +41,6 @@ fun CustomTopAppBar(
     sharedViewModel: SharedViewModel,
     searchAppBarState: SearchAppBarState,
     searchTextState: String,
-
 ) {
     when (searchAppBarState) {
         SearchAppBarState.CLOSED -> {
@@ -49,7 +48,6 @@ fun CustomTopAppBar(
                 onSearchClicked = {
                     sharedViewModel.searchAppBarState.value =
                         SearchAppBarState.OPENED
-
                 }
             )
         }

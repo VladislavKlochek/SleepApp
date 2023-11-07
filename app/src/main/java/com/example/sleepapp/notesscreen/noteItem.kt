@@ -1,8 +1,13 @@
 package com.example.sleepapp.notesscreen
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.icu.text.DateFormat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -31,8 +37,11 @@ import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat.startActivity
+import androidx.core.view.ContentInfoCompat.Flags
 import androidx.core.widget.TextViewCompat.AutoSizeTextType
 import com.example.sleepapp.R
+import com.example.sleepapp.activities.NoteActivity
 import com.example.sleepapp.ui.theme.noteCardColor
 import com.example.sleepapp.ui.theme.noteCardTagsBackgroundColor
 import java.text.SimpleDateFormat
@@ -41,12 +50,19 @@ import java.util.Locale
 
 
 @Composable
-fun NoteItem(note: note) {
+fun NoteItem(note: note, activityContext: Context) {
     val formatter = SimpleDateFormat("dd.MM.yyyy", Locale.ROOT)
     Card(
         modifier = Modifier
             .sizeIn(200.dp, 200.dp)
-            .padding(5.dp),
+            .padding(5.dp).clickable(
+                onClick = {
+                    val intent = Intent(activityContext, NoteActivity::class.java)
+                    intent.putExtra("note", note)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    startActivity(activityContext , intent, null)
+                }
+            ),
         shape = RoundedCornerShape(20.dp),
         content = {
             Column(modifier = Modifier.background(noteCardColor),

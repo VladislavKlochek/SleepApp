@@ -1,4 +1,6 @@
 
+import android.app.Activity
+import android.content.Context
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -26,7 +28,7 @@ import com.example.sleepapp.topappbars.notes.SharedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ItemNavigation(sharedViewModel1: SharedViewModel) {
+fun ItemNavigation(sharedViewModel1: SharedViewModel, activityContext: Context) {
     val listItems = listOf(BottomItem.Notes, BottomItem.Alarms, BottomItem.Information)
     val navController = rememberNavController()
 
@@ -83,7 +85,7 @@ fun ItemNavigation(sharedViewModel1: SharedViewModel) {
                 ), // Adjust the padding here
         ) {
             // Your content here
-            NavGraph(navHostController = navController)
+            NavGraph(navHostController = navController, activityContext)
         }
 
 
