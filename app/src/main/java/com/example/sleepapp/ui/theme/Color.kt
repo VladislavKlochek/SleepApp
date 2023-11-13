@@ -23,3 +23,8 @@ val PinkDark = Color(0xFF7E467B)
 val LightPink = Color(0xFFA878A6)
 val DarkGreen = Color(0xFF508632)
 val NoteRedColor = Color(0xFF922528)
+
+//AlarmsScreen
+val AlarmCardColor = Color(0xFF6634C2)
+val CheckedSwitchTrackColor = Color(0xFFCFCDD5)
+val CheckedThumbColor = Color(0xFF5A00FF)
