@@ -10,7 +10,7 @@ import androidx.navigation.compose.composable
 fun NavGraph(navHostController: NavHostController, activityContext: Context) {
     NavHost(navController = navHostController, startDestination = "notes_screen"){
         composable("notes_screen"){ NotesScreen(activityContext)}
-        composable("alarms_screen"){ AlarmsScreen()}
+        composable("alarms_screen"){ AlarmsScreen(activityContext)}
         composable("information_screen"){ InformationScreen()}
     }
 }
