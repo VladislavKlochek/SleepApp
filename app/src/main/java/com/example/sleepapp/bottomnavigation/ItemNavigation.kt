@@ -1,6 +1,7 @@
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -20,7 +21,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.core.content.ContextCompat
 import androidx.navigation.compose.rememberNavController
+import com.example.sleepapp.activities.AddNoteActivity
+import com.example.sleepapp.activities.NoteActivity
 import com.example.sleepapp.bottomnavigation.BottomItem
 import com.example.sleepapp.topappbars.notes.CustomTopAppBar
 import com.example.sleepapp.topappbars.notes.SearchAppBarState
@@ -65,7 +69,13 @@ fun ItemNavigation(sharedViewModel1: SharedViewModel, activityContext: Context) 
         },
         floatingActionButton = {
             if (selectedItemIndex != 2) FloatingActionButton(
-                onClick = { /*TODO*/ },
+                onClick = {
+                          if(selectedItemIndex == 0){
+                              val intent = Intent(activityContext, AddNoteActivity::class.java)
+                              intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                              ContextCompat.startActivity(activityContext, intent, null)
+                          }
+                },
             ) {
                 Icon(imageVector = Icons.Filled.Add, contentDescription = "add")
             }
