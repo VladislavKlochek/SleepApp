@@ -1,11 +1,16 @@
-package com.example.sleepapp.activities
+package com.example.sleepapp
 
 import ItemNavigation
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
-import com.example.sleepapp.topappbars.notes.SharedViewModel
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.sleepapp.ui.theme.SleepAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -13,8 +18,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             SleepAppTheme {
-                val sharedViewModel: SharedViewModel by viewModels()
-                ItemNavigation(sharedViewModel)
+                ItemNavigation()
             }
         }
     }
