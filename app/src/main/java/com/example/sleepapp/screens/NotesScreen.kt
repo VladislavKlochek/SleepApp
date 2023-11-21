@@ -10,6 +10,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MediumTopAppBar
 import java.text.SimpleDateFormat
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -89,10 +90,14 @@ fun NotesScreen() {
             coffee = false,
             alcohol = false))
 
-    LazyColumn(
-        modifier = Modifier.padding(5.dp),
-        content = {itemsIndexed(items){ _, item ->
-            NoteItem(note = item)
-        } }
-    )
+
+        LazyColumn(
+            modifier = Modifier
+                .padding(5.dp),
+            content = {itemsIndexed(items){ _, item ->
+                NoteItem(note = item)
+            } }
+        )
+
+
 }
