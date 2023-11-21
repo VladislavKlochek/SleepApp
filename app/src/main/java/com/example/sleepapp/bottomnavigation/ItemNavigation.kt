@@ -1,7 +1,7 @@
-
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.os.Parcelable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -22,10 +22,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.sleepapp.activities.AddNoteActivity
-import com.example.sleepapp.activities.NoteActivity
 import com.example.sleepapp.bottomnavigation.BottomItem
+import com.example.sleepapp.dao.NotesViewModel
 import com.example.sleepapp.topappbars.notes.CustomTopAppBar
 import com.example.sleepapp.topappbars.notes.SearchAppBarState
 import com.example.sleepapp.topappbars.notes.SharedViewModel
@@ -43,6 +44,7 @@ fun ItemNavigation(sharedViewModel1: SharedViewModel, activityContext: Context) 
     val searchAppBarState: SearchAppBarState by sharedViewModel1.searchAppBarState
     val searchTextState: String by sharedViewModel1.searchTextState
 
+    val notesViewModel: NotesViewModel = viewModel(factory = NotesViewModel.factory)
 
     Scaffold(
         bottomBar = {
@@ -70,11 +72,11 @@ fun ItemNavigation(sharedViewModel1: SharedViewModel, activityContext: Context) 
         floatingActionButton = {
             if (selectedItemIndex != 2) FloatingActionButton(
                 onClick = {
-                          if(selectedItemIndex == 0){
-                              val intent = Intent(activityContext, AddNoteActivity::class.java)
-                              intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                              ContextCompat.startActivity(activityContext, intent, null)
-                          }
+                    if (selectedItemIndex == 0) {
+                        val intent = Intent(activityContext, AddNoteActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        ContextCompat.startActivity(activityContext, intent, null)
+                    }
                 },
             ) {
                 Icon(imageVector = Icons.Filled.Add, contentDescription = "add")
@@ -82,7 +84,11 @@ fun ItemNavigation(sharedViewModel1: SharedViewModel, activityContext: Context) 
         },
         floatingActionButtonPosition = FabPosition.End,
         topBar = {
-            if (selectedItemIndex == 0) CustomTopAppBar(sharedViewModel1, searchAppBarState, searchTextState)
+            if (selectedItemIndex == 0) CustomTopAppBar(
+                sharedViewModel1,
+                searchAppBarState,
+                searchTextState
+            )
         }
     ) {
 
@@ -95,7 +101,7 @@ fun ItemNavigation(sharedViewModel1: SharedViewModel, activityContext: Context) 
                 ), // Adjust the padding here
         ) {
             // Your content here
-            NavGraph(navHostController = navController, activityContext)
+            NavGraph(navHostController = navController, activityContext, notesViewModel)
         }
 
 

@@ -1,7 +1,9 @@
+import org.jetbrains.kotlin.kapt3.base.Kapt.kapt
 
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("kotlin-kapt")
 }
 
 android {
@@ -31,11 +33,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_19
+        targetCompatibility = JavaVersion.VERSION_19
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "19"
     }
     buildFeatures {
         compose = true
@@ -76,4 +78,10 @@ dependencies {
     implementation ("com.maxkeppeler.sheets-compose-dialogs:core:1.0.2")
     implementation ("com.maxkeppeler.sheets-compose-dialogs:calendar:1.0.2")
     implementation ("com.maxkeppeler.sheets-compose-dialogs:clock:1.0.2")
+
+    implementation ("androidx.room:room-ktx:2.6.0")
+    kapt("androidx.room:room-compiler:2.6.0")
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.0")
+
+    implementation ("com.google.code.gson:gson:2.9.0") // Use the latest version available
 }

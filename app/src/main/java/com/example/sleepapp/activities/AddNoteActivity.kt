@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -38,11 +39,14 @@ import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -65,8 +69,14 @@ import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
 import com.example.sleepapp.R
+import com.example.sleepapp.dao.NotesEvent
+import com.example.sleepapp.dao.NotesState
+import com.example.sleepapp.dao.NotesViewModel
+import com.example.sleepapp.notesscreen.note
 import com.example.sleepapp.ui.theme.DarkGreen
+import com.example.sleepapp.ui.theme.DeleteButtonDarkRed
 import com.example.sleepapp.ui.theme.LightPink
 import com.example.sleepapp.ui.theme.LightPurple
 import com.example.sleepapp.ui.theme.NoteRedColor
@@ -74,38 +84,58 @@ import com.example.sleepapp.ui.theme.PinkDark
 import com.example.sleepapp.ui.theme.PurpleDark
 import com.example.sleepapp.ui.theme.noteCardColor
 import com.maxkeppeker.sheets.core.models.base.rememberSheetState
-import com.maxkeppeker.sheets.core.utils.BaseConstants
 import com.maxkeppeler.sheets.calendar.CalendarDialog
 import com.maxkeppeler.sheets.calendar.models.CalendarConfig
 import com.maxkeppeler.sheets.calendar.models.CalendarSelection
 import java.text.SimpleDateFormat
 import java.time.LocalDate
+import java.time.ZoneId
+import java.util.Date
 import java.util.Locale
 
 class AddNoteActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val tags = mutableStateListOf<String>()
         setContent {
-            CreateAddActivity(baseContext)
+            val notesViewModel =
+                ViewModelProvider(this, NotesViewModel.factory)[NotesViewModel::class.java]
+            val state by notesViewModel.state.collectAsState()
+            val note = intent.getSerializableExtra("note") as note?
+            /*            val index = intent.getIntExtra("id", -1)*/
+            /*val note = notesViewModel.database.notesDao.getNoteById(index.toLong()).firstOrNull()*/
+
+
+            CreateAddActivity(
+                baseContext,
+                state = state,
+                onNoteEvent = notesViewModel::onEvent,
+                note = note,
+                tags = tags
+            )
+
 
         }
     }
 }
 
-val Tags = mutableStateListOf<String>()
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateAddActivity(
     context: Context,
-    focusRequester: FocusRequester = remember { FocusRequester() }
+    focusRequester: FocusRequester = remember { FocusRequester() },
+    onNoteEvent: (NotesEvent) -> Unit,
+    state: NotesState,
+    note: note?,
+    tags: SnapshotStateList<String>
 ) {
     val formatter = SimpleDateFormat("dd.MM.yyyy", Locale.ROOT)
     var isDateAdded by remember {
         mutableStateOf(false)
     }
     var addedDate by remember {
-        mutableStateOf(LocalDate.now())
+        mutableStateOf(LocalDate.MIN)
     }
     var isNameAdded by remember {
         mutableStateOf(false)
@@ -134,6 +164,9 @@ fun CreateAddActivity(
     var isAddTagShowing by remember {
         mutableStateOf(false)
     }
+    /*    var tags by remember {
+            mutableStateOf(mutableListOf<String>())
+        }*/
     var tagToSave by remember {
         mutableStateOf("")
     }
@@ -147,21 +180,76 @@ fun CreateAddActivity(
 
     val calendarState = rememberSheetState()
 
+    val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+
+    var alreadyRead by remember {
+        mutableStateOf(false)
+    }
+
+    var isAlreadyExisting = false
+
+    if(note != null){
+        isAlreadyExisting = true
+    }
+
+    if (note != null && !alreadyRead) {
+        onNoteEvent(NotesEvent.SetId(note.id))
+
+        addedDate = if(note.date == null){
+            LocalDate.MIN
+        } else{
+            note.date.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate();
+        }
+
+        note.tags?.let {
+            tags.addAll(it)
+        }
+
+        if (note.alcohol) {
+            isAffectedByAlcoholAdded = note.alcohol
+            alcoholButtonColor = NoteRedColor
+            /* onNoteEvent(NotesEvent.SetIsAffectedByAlcohol(true))*/
+        }
+        if (note.coffee) {
+            isAffectedByCoffeeAdded = note.coffee
+            coffeeButtonColor = NoteRedColor
+            /*onNoteEvent(NotesEvent.SetIsAffectedByCoffee(true))*/
+        }
+
+        isNameAdded = note.noteName != null
+        addedName = note.noteName ?: ""
+        isDateAdded = note.date != null
+        NoteText = note.text ?: ""
+
+        alreadyRead = true
+
+    }
+
+
     CalendarDialog(
         state = calendarState,
         config = CalendarConfig(
             monthSelection = true,
             yearSelection = true
         ),
-        selection = CalendarSelection.Date{
-                date ->
-            run { addedDate = date; isDateAdded = true }
+        selection = CalendarSelection.Date { date ->
+            run {
+                addedDate = date;
+                isDateAdded = true;
+                /*onNoteEvent(
+                NotesEvent.SetDate(
+                    Date.valueOf(
+                        date.toString()
+                    )
+                )
+            )*/
+            }
         }
     )
     Card(
         shape = RectangleShape
     ) {
-        Column(modifier = Modifier.background(noteCardColor), content = {
+        Column(modifier = Modifier.background(noteCardColor)) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -175,9 +263,17 @@ fun CreateAddActivity(
                             if (isDateAdded) {
                                 Text(
                                     text = buildAnnotatedString {
-                                        withStyle(style = SpanStyle(fontSize = 20.sp, fontWeight = FontWeight.Medium, color = Color.Black)) {
+                                        withStyle(
+                                            style = SpanStyle(
+                                                fontSize = 20.sp,
+                                                fontWeight = FontWeight.Medium,
+                                                color = Color.Black
+                                            )
+                                        ) {
                                             append("${addedDate.dayOfMonth}.${addedDate.monthValue}.${addedDate.year}")
-                                        }},
+                                        }
+                                    },
+                                    /*text = state.date.toString(),*/
                                     modifier = Modifier.clickable { calendarState.show() }
                                 )
                             }
@@ -208,23 +304,28 @@ fun CreateAddActivity(
             );
             Row(content = {
                 Box(
-                    modifier = Modifier.fillMaxWidth(), content = {
+                    modifier = Modifier.fillMaxWidth(),
+                    content = {
                         if (isNameAdded) Text(
                             text = addedName,
-                            modifier = Modifier.padding(top = 10.dp).clickable { isAddNameShowing = true},
+                            /*text = state.name,*/
+                            modifier = Modifier
+                                .padding(top = 10.dp)
+                                .clickable { isAddNameShowing = true },
                             fontWeight = FontWeight.Medium,
                             textAlign = TextAlign.Center,
                             fontSize = 20.sp,
                             color = Color.Black
                         )
-                    }, contentAlignment = Alignment.BottomCenter
+                    },
+                    contentAlignment = Alignment.BottomCenter
                 )
             })
             OutlinedTextField(
-                value = NoteText,
+                value = NoteText/*state.mainText*/,
                 onValueChange = {
-                    // Обновите текст, когда пользователь вводит новое значение
                     NoteText = it
+                    /*onNoteEvent(NotesEvent.SetMainText(it))*/
                 },
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Text, imeAction = ImeAction.None
@@ -239,80 +340,119 @@ fun CreateAddActivity(
                 textStyle = TextStyle(fontSize = 22.sp, textIndent = TextIndent(40.sp, 15.sp))
             )
             Row(
-                modifier = Modifier.fillMaxSize(),
-                content = {
-                    Column(modifier = Modifier.weight(1f)) {
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Button(
+                        onClick = {
+                            calendarState.show()
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .size(100.dp, 0.dp), colors = ButtonDefaults.buttonColors(
+                            containerColor = PurpleDark,
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(0.dp, 30.dp, 30.dp, 0.dp)
+                    ) {
+                        Text(text = "Дата")
+                    }
+                    Button(
+                        onClick = { isAddNameShowing = true }, modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(end = 3.dp), colors = ButtonDefaults.buttonColors(
+                            containerColor = LightPurple,
+                            contentColor = Color.White
+                        ),
+                        shape = AbsoluteRoundedCornerShape(0.dp, 30.dp, 0.dp, 0.dp)
+                    ) {
+                        Text(text = "Название")
+                    }
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Button(
+                        onClick = {
+
+                            onNoteEvent(NotesEvent.SetName(addedName))
+                            onNoteEvent(NotesEvent.SetMainText(NoteText))
+
+                            if(addedDate != LocalDate.MIN) {
+                                onNoteEvent(
+                                    NotesEvent.SetDate(
+                                        Date.from(
+                                            addedDate.atStartOfDay(
+                                                ZoneId.systemDefault()
+                                            ).toInstant()
+                                        )
+                                    )
+                                )
+                            }
+
+                            onNoteEvent(NotesEvent.SetTags(tags.toTypedArray()))
+                            onNoteEvent(NotesEvent.SetIsAffectedByCoffee(isAffectedByCoffeeAdded));
+                            onNoteEvent(NotesEvent.SetIsAffectedByAlcohol(isAffectedByAlcoholAdded));
+                            onNoteEvent(NotesEvent.SaveNote);
+                            onBackPressedDispatcher?.onBackPressed()
+                        },
+                        modifier = Modifier.fillMaxSize().weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = DarkGreen,
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(50.dp, 50.dp, 0.dp, 0.dp)
+                    ) {
+                        Text(text = "Готово")
+                    }
+                    if(isAlreadyExisting){
                         Button(
                             onClick = {
-                                calendarState.show()
+                                note?.let { NotesEvent.DeleteNote(it) }?.let { onNoteEvent(it) }
+                                onBackPressedDispatcher?.onBackPressed()
                             },
-                            modifier = Modifier
-                                .weight(1f)
-                                .size(100.dp, 0.dp), colors = ButtonDefaults.buttonColors(
-                                containerColor = PurpleDark,
-                                contentColor = Color.White
-                            ),
-                            shape = RoundedCornerShape(0.dp, 30.dp, 30.dp, 0.dp)
-                        ) {
-                            Text(text = "Дата")
-                        }
-                        Button(
-                            onClick = { isAddNameShowing = true }, modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
-                                .padding(end = 3.dp), colors = ButtonDefaults.buttonColors(
-                                containerColor = LightPurple,
-                                contentColor = Color.White
-                            ),
-                            shape = AbsoluteRoundedCornerShape(0.dp, 30.dp, 0.dp, 0.dp)
-                        ) {
-                            Text(text = "Название")
-                        }
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Button(
-                            onClick = { /*TODO*/ }, modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier.fillMaxSize().weight(1f),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = DarkGreen,
+                                containerColor = DeleteButtonDarkRed,
                                 contentColor = Color.White
                             ),
-                            shape = RoundedCornerShape(50.dp, 50.dp, 0.dp, 0.dp)
-                        ) {
-                            Text(text = "Готово")
+                            shape = RoundedCornerShape(0.dp, 0.dp, 0.dp, 0.dp),
+                        ){
+                            Text(text = "Удалить")
                         }
                     }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Button(
-                            onClick = { isAddTagsVisible = true }, modifier = Modifier
-                                .weight(1f)
-                                .size(100.dp, 0.dp)
-                                .align(Alignment.End), colors = ButtonDefaults.buttonColors(
-                                containerColor = PinkDark,
-                                contentColor = Color.White
-                            ), shape = RoundedCornerShape(30.dp, 0.dp, 0.dp, 30.dp)
-                        ) {
-                            Text(text = "Теги")
-                        }
-                        Button(
-                            onClick = { isAddFactorCardShowing = !isAddFactorCardShowing },
-                            modifier = Modifier
-                                .weight(1f)
-                                .align(Alignment.End)
-                                .fillMaxWidth()
-                                .padding(start = 3.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = LightPink,
-                                contentColor = Color.White
-                            ),
-                            shape = RoundedCornerShape(30.dp, 0.dp, 0.dp, 0.dp)
-                        ) {
-                            Text(text = "Факторы")
-                        }
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Button(
+                        onClick = { isAddTagsVisible = true }, modifier = Modifier
+                            .weight(1f)
+                            .size(100.dp, 0.dp)
+                            .align(Alignment.End), colors = ButtonDefaults.buttonColors(
+                            containerColor = PinkDark,
+                            contentColor = Color.White
+                        ), shape = RoundedCornerShape(30.dp, 0.dp, 0.dp, 30.dp)
+                    ) {
+                        Text(text = "Теги")
                     }
-                })
+                    Button(
+                        onClick = { isAddFactorCardShowing = !isAddFactorCardShowing },
+                        modifier = Modifier
+                            .weight(1f)
+                            .align(Alignment.End)
+                            .fillMaxWidth()
+                            .padding(start = 3.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = LightPink,
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(30.dp, 0.dp, 0.dp, 0.dp)
+                    ) {
+                        Text(text = "Факторы")
+                    }
+                }
+            }
 
 
-        })
+        }
     }
     if (isAddTagsVisible) {
         Box(
@@ -327,7 +467,21 @@ fun CreateAddActivity(
                         modifier = Modifier.fillMaxSize()
                     ) {
                         LazyColumn(
-                            content = { items(Tags) { TagItem1(tag = it) } },
+                            content = {
+                                /*if (state.tags != null) items(state.tags!!) {
+                                    TagItem1(
+                                        tag = it,
+                                        state
+                                    )
+                                }*/
+                                items(tags) {
+                                    TagItem1(
+                                        tag = it,
+
+                                        tags = tags/*state*/
+                                    )
+                                }
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .fillMaxHeight(0.8f)
@@ -374,14 +528,17 @@ fun CreateAddActivity(
                         verticalArrangement = Arrangement.Center
                     ) {
                         TextField(
-                            value = addedName,
-                            onValueChange = { addedName = it },
+                            value = addedName/*state.name*/,
+                            onValueChange = {
+                                addedName =
+                                    it/*addedName = it;*/ /*onNoteEvent(NotesEvent.SetName(it))*/
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             textStyle = TextStyle(fontSize = 20.sp)
                         )
                         OutlinedButton(
-                            onClick = { isNameAdded = true; isAddNameShowing = false },
+                            onClick = { isNameAdded = true; isAddNameShowing = false; onNoteEvent(NotesEvent.SetName(addedName)) },
                             border = BorderStroke(0.dp, Color.Transparent),
                             modifier = Modifier.fillMaxSize(),
                             shape = RectangleShape,
@@ -433,7 +590,9 @@ fun CreateAddActivity(
                             onClick = {
                                 isAddTagShowing = false;
                                 if (!tagToSave.isEmpty() || !tagToSave.isBlank()) {
-                                    Tags.add(tagToSave);
+
+                                    tags.add(tagToSave)
+
                                     tagToSave = ""
                                 } else {
                                     Toast.makeText(context, "Введите тег", Toast.LENGTH_SHORT)
@@ -473,20 +632,22 @@ fun CreateAddActivity(
         ) {
             Card(
                 content = {
-                    Column () {
+                    Column() {
                         Row(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .weight(1.3f),
-                            ) {
+                        ) {
                             Button(
                                 onClick = {
                                     if (alcoholButtonColor == PurpleDark) {
                                         alcoholButtonColor = NoteRedColor
                                         isAffectedByAlcoholAdded = true
+                                        onNoteEvent(NotesEvent.SetIsAffectedByAlcohol(true))
                                     } else {
                                         alcoholButtonColor = PurpleDark;
                                         isAffectedByAlcoholAdded = false
+                                        onNoteEvent(NotesEvent.SetIsAffectedByAlcohol(false))
                                     }
                                 },
                                 modifier = Modifier
@@ -509,9 +670,11 @@ fun CreateAddActivity(
                                     if (coffeeButtonColor == PurpleDark) {
                                         coffeeButtonColor = NoteRedColor
                                         isAffectedByCoffeeAdded = true
+                                        onNoteEvent(NotesEvent.SetIsAffectedByCoffee(true))
                                     } else {
                                         coffeeButtonColor = PurpleDark
                                         isAffectedByCoffeeAdded = false
+                                        onNoteEvent(NotesEvent.SetIsAffectedByCoffee(false))
                                     }
                                 },
                                 modifier = Modifier
@@ -534,6 +697,24 @@ fun CreateAddActivity(
                         }
                         OutlinedButton(
                             onClick = {
+                                if (coffeeButtonColor == PurpleDark) {
+                                    isAffectedByCoffeeAdded = false
+                                    onNoteEvent(NotesEvent.SetIsAffectedByCoffee(false))
+
+                                } else {
+                                    coffeeButtonColor = NoteRedColor
+                                    isAffectedByCoffeeAdded = true
+                                    onNoteEvent(NotesEvent.SetIsAffectedByCoffee(true))
+
+                                }
+                                if (alcoholButtonColor == PurpleDark) {
+                                    isAffectedByAlcoholAdded = false
+                                    onNoteEvent(NotesEvent.SetIsAffectedByAlcohol(false))
+                                } else {
+                                    alcoholButtonColor = NoteRedColor
+                                    isAffectedByAlcoholAdded = true
+                                    onNoteEvent(NotesEvent.SetIsAffectedByAlcohol(true))
+                                }
                                 isAddFactorCardShowing = false;
                             },
                             border = BorderStroke(0.dp, Color.Transparent),
@@ -561,11 +742,12 @@ fun CreateAddActivity(
             )
         }
     }
+
+
 }
 
 @Composable
-fun TagItem1(tag: String) {
-
+fun TagItem1(tag: String, tags: SnapshotStateList<String>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -586,7 +768,9 @@ fun TagItem1(tag: String) {
                     .padding(start = 5.dp), fontSize = 20.sp
             )
             IconButton(
-                onClick = { Tags.remove(tag) },
+                onClick = {
+                    tags.remove(tag) // Remove the tag from the mutable list
+                },
                 content = {
                     Icon(
                         painter = painterResource(id = R.drawable.delete_tag_icon),
@@ -600,6 +784,7 @@ fun TagItem1(tag: String) {
         },
     )
 }
+
 
 fun Modifier.borderOnlyBottom1(
     borderStroke: BorderStroke

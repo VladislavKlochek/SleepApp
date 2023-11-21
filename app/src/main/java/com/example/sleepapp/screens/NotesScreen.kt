@@ -17,10 +17,13 @@ import java.text.SimpleDateFormat
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.sleepapp.dao.NotesViewModel
 import com.example.sleepapp.notesscreen.NoteItem
 import com.example.sleepapp.notesscreen.note
 import java.util.Date
@@ -28,9 +31,13 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NotesScreen(activityContext: Context) {
-    val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.ROOT)
-    val items = listOf<note>(
+fun NotesScreen(
+    activityContext: Context,
+    notesViewModel: NotesViewModel
+    ) {
+    val notesList = notesViewModel.itemsList.collectAsState(initial = emptyList())
+    /*val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.ROOT)*/
+    /*val items = listOf<note>(
         note(
             dateFormat.parse("27.08.2021"),
             "Лес",
@@ -110,15 +117,15 @@ fun NotesScreen(activityContext: Context) {
             coffee = false,
             alcohol = false
         )
-    )
+    )*/
 
 
     LazyColumn(
         modifier = Modifier
             .padding(5.dp)
     ) {
-        itemsIndexed(items) { _, item ->
-            NoteItem(note = item, activityContext)
+        itemsIndexed(notesList.value) { _, item ->
+            NoteItem(note = item, activityContext, item.id)
         }
     }
 
