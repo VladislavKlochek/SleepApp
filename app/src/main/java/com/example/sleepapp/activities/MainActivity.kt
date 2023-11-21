@@ -14,7 +14,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             SleepAppTheme {
                 val sharedViewModel: SharedViewModel by viewModels()
-                ItemNavigation(sharedViewModel, this.applicationContext)
+                ItemNavigation(sharedViewModel)
             }
         }
     }
