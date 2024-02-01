@@ -3,17 +3,17 @@ package com.example.sleepapp.dao
 import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import java.util.Date
+import java.time.LocalDate
 
 class Converters {
     @TypeConverter
-    fun fromDate(value: Long?): Date? {
-        return value?.let { Date(it) }
+    fun fromDate(value: Long?): LocalDate? {
+        return value?.let { LocalDate.ofEpochDay(it) }
     }
 
     @TypeConverter
-    fun toDate(date: Date?): Long? {
-        return date?.time
+    fun toDate(date: LocalDate?): Long? {
+        return date?.toEpochDay()
     }
     @TypeConverter
     fun fromStringArray(value: String?): Array<String>? {

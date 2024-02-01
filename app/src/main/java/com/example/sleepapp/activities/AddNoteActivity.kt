@@ -39,8 +39,6 @@ import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -56,6 +54,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -72,26 +71,19 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import com.example.sleepapp.R
 import com.example.sleepapp.dao.NotesEvent
-import com.example.sleepapp.dao.NotesState
 import com.example.sleepapp.dao.NotesViewModel
 import com.example.sleepapp.notesscreen.note
 import com.example.sleepapp.ui.theme.DarkGreen
 import com.example.sleepapp.ui.theme.DeleteButtonDarkRed
-import com.example.sleepapp.ui.theme.LightPink
 import com.example.sleepapp.ui.theme.LightPurple
 import com.example.sleepapp.ui.theme.NoteRedColor
-import com.example.sleepapp.ui.theme.PinkDark
 import com.example.sleepapp.ui.theme.PurpleDark
 import com.example.sleepapp.ui.theme.noteCardColor
 import com.maxkeppeker.sheets.core.models.base.rememberSheetState
 import com.maxkeppeler.sheets.calendar.CalendarDialog
 import com.maxkeppeler.sheets.calendar.models.CalendarConfig
 import com.maxkeppeler.sheets.calendar.models.CalendarSelection
-import java.text.SimpleDateFormat
 import java.time.LocalDate
-import java.time.ZoneId
-import java.util.Date
-import java.util.Locale
 
 class AddNoteActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -101,21 +93,15 @@ class AddNoteActivity : ComponentActivity() {
         setContent {
             val notesViewModel =
                 ViewModelProvider(this, NotesViewModel.factory)[NotesViewModel::class.java]
-            val state by notesViewModel.state.collectAsState()
             val note = intent.getSerializableExtra("note") as note?
-            /*            val index = intent.getIntExtra("id", -1)*/
-            /*val note = notesViewModel.database.notesDao.getNoteById(index.toLong()).firstOrNull()*/
-
-
+            val window = this.window
+            window.statusBarColor = noteCardColor.toArgb()
             CreateAddActivity(
                 baseContext,
-                state = state,
                 onNoteEvent = notesViewModel::onEvent,
                 note = note,
                 tags = tags
             )
-
-
         }
     }
 }
@@ -126,11 +112,9 @@ fun CreateAddActivity(
     context: Context,
     focusRequester: FocusRequester = remember { FocusRequester() },
     onNoteEvent: (NotesEvent) -> Unit,
-    state: NotesState,
     note: note?,
     tags: SnapshotStateList<String>
 ) {
-    val formatter = SimpleDateFormat("dd.MM.yyyy", Locale.ROOT)
     var isDateAdded by remember {
         mutableStateOf(false)
     }
@@ -164,9 +148,6 @@ fun CreateAddActivity(
     var isAddTagShowing by remember {
         mutableStateOf(false)
     }
-    /*    var tags by remember {
-            mutableStateOf(mutableListOf<String>())
-        }*/
     var tagToSave by remember {
         mutableStateOf("")
     }
@@ -177,8 +158,6 @@ fun CreateAddActivity(
 
     var alcoholButtonColor by remember { mutableStateOf(PurpleDark) }
     var coffeeButtonColor by remember { mutableStateOf(PurpleDark) }
-
-    val calendarState = rememberSheetState()
 
     val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
@@ -198,7 +177,7 @@ fun CreateAddActivity(
         addedDate = if(note.date == null){
             LocalDate.MIN
         } else{
-            note.date.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate();
+            note.date
         }
 
         note.tags?.let {
@@ -225,6 +204,7 @@ fun CreateAddActivity(
 
     }
 
+    val calendarState = rememberSheetState()
 
     CalendarDialog(
         state = calendarState,
@@ -236,16 +216,10 @@ fun CreateAddActivity(
             run {
                 addedDate = date;
                 isDateAdded = true;
-                /*onNoteEvent(
-                NotesEvent.SetDate(
-                    Date.valueOf(
-                        date.toString()
-                    )
-                )
-            )*/
             }
         }
     )
+
     Card(
         shape = RectangleShape
     ) {
@@ -322,16 +296,14 @@ fun CreateAddActivity(
                 )
             })
             OutlinedTextField(
-                value = NoteText/*state.mainText*/,
+                value = NoteText,
                 onValueChange = {
                     NoteText = it
-                    /*onNoteEvent(NotesEvent.SetMainText(it))*/
                 },
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Text, imeAction = ImeAction.None
                 ),
                 keyboardActions = KeyboardActions(onDone = {
-                    // Вызывается, когда пользователь завершает ввод (например, нажимает Enter или "Готово" на клавиатуре)
                 }),
                 modifier = Modifier
                     .padding(10.dp, 10.dp, 10.dp, 10.dp)
@@ -349,7 +321,8 @@ fun CreateAddActivity(
                         },
                         modifier = Modifier
                             .weight(1f)
-                            .size(100.dp, 0.dp), colors = ButtonDefaults.buttonColors(
+                            .size(100.dp, 0.dp),
+                        colors = ButtonDefaults.buttonColors(
                             containerColor = PurpleDark,
                             contentColor = Color.White
                         ),
@@ -361,7 +334,8 @@ fun CreateAddActivity(
                         onClick = { isAddNameShowing = true }, modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
-                            .padding(end = 3.dp), colors = ButtonDefaults.buttonColors(
+                            .padding(end = 3.dp),
+                        colors = ButtonDefaults.buttonColors(
                             containerColor = LightPurple,
                             contentColor = Color.White
                         ),
@@ -380,11 +354,7 @@ fun CreateAddActivity(
                             if(addedDate != LocalDate.MIN) {
                                 onNoteEvent(
                                     NotesEvent.SetDate(
-                                        Date.from(
-                                            addedDate.atStartOfDay(
-                                                ZoneId.systemDefault()
-                                            ).toInstant()
-                                        )
+                                        addedDate
                                     )
                                 )
                             }
@@ -426,10 +396,12 @@ fun CreateAddActivity(
                         onClick = { isAddTagsVisible = true }, modifier = Modifier
                             .weight(1f)
                             .size(100.dp, 0.dp)
-                            .align(Alignment.End), colors = ButtonDefaults.buttonColors(
-                            containerColor = PinkDark,
+                            .align(Alignment.End),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PurpleDark,
                             contentColor = Color.White
-                        ), shape = RoundedCornerShape(30.dp, 0.dp, 0.dp, 30.dp)
+                        ),
+                        shape = RoundedCornerShape(30.dp, 0.dp, 0.dp, 30.dp)
                     ) {
                         Text(text = "Теги")
                     }
@@ -441,7 +413,7 @@ fun CreateAddActivity(
                             .fillMaxWidth()
                             .padding(start = 3.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = LightPink,
+                            containerColor = LightPurple,
                             contentColor = Color.White
                         ),
                         shape = RoundedCornerShape(30.dp, 0.dp, 0.dp, 0.dp)
@@ -468,17 +440,10 @@ fun CreateAddActivity(
                     ) {
                         LazyColumn(
                             content = {
-                                /*if (state.tags != null) items(state.tags!!) {
-                                    TagItem1(
-                                        tag = it,
-                                        state
-                                    )
-                                }*/
                                 items(tags) {
                                     TagItem1(
                                         tag = it,
-
-                                        tags = tags/*state*/
+                                        tags = tags
                                     )
                                 }
                             },
@@ -528,10 +493,10 @@ fun CreateAddActivity(
                         verticalArrangement = Arrangement.Center
                     ) {
                         TextField(
-                            value = addedName/*state.name*/,
+                            value = addedName,
                             onValueChange = {
                                 addedName =
-                                    it/*addedName = it;*/ /*onNoteEvent(NotesEvent.SetName(it))*/
+                                    it
                             },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
@@ -553,7 +518,6 @@ fun CreateAddActivity(
                         )
                     }
                 },
-                /*modifier = Modifier.background(Color.Red).fillMaxHeight(0.8f).fillMaxWidth(), fontSize = 20.sp*/
                 modifier = Modifier
                     .fillMaxWidth(0.6f)
                     .fillMaxHeight(0.15f)
@@ -590,9 +554,7 @@ fun CreateAddActivity(
                             onClick = {
                                 isAddTagShowing = false;
                                 if (!tagToSave.isEmpty() || !tagToSave.isBlank()) {
-
                                     tags.add(tagToSave)
-
                                     tagToSave = ""
                                 } else {
                                     Toast.makeText(context, "Введите тег", Toast.LENGTH_SHORT)
@@ -613,7 +575,6 @@ fun CreateAddActivity(
                         )
                     }
                 },
-                /*modifier = Modifier.background(Color.Red).fillMaxHeight(0.8f).fillMaxWidth(), fontSize = 20.sp*/
                 modifier = Modifier
                     .fillMaxWidth(0.6f)
                     .fillMaxHeight(0.15f)
@@ -733,7 +694,6 @@ fun CreateAddActivity(
                         )
                     }
                 },
-                /*modifier = Modifier.background(Color.Red).fillMaxHeight(0.8f).fillMaxWidth(), fontSize = 20.sp*/
                 modifier = Modifier
                     .fillMaxWidth(0.6f)
                     .fillMaxHeight(0.24f)

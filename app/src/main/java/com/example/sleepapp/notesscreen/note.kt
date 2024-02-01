@@ -1,14 +1,13 @@
 package com.example.sleepapp.notesscreen
 
-import android.os.Parcelable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.io.Serializable
-import java.util.Date
+import java.time.LocalDate
 
 @Entity(tableName = "notes")
 data class note(
-    val date: Date?,
+    val date: LocalDate?,
     val noteName: String?,
     val text: String?,
     val tags: Array<String>?,
@@ -16,7 +15,4 @@ data class note(
     val alcohol: Boolean,
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-) : Serializable {
-
-
-}
+) : Serializable

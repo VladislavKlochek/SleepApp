@@ -2,4 +2,8 @@
 <resources>
 
     <style name="Theme.SleepApp" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Здесь может быть дополнительная конфигурация темы -->
+    </style>
 </resources>

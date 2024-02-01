@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.sleepapp.App
 import com.example.sleepapp.notesscreen.note
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -16,10 +17,13 @@ import java.io.Serializable
 class NotesViewModel(
     val database: Database
 ) : ViewModel(), Serializable {
-    val itemsList = database.notesDao.getAllNotes()
+    var itemsList = database.notesDao.getAllNotes()
+
+    fun getNotesWithTag(tag:String): Flow<List<note>> {
+        return database.notesDao.getNotesWithTag(tag)
+    }
 
     private val _state = MutableStateFlow(NotesState())
-    var state = _state
     companion object{
         val factory : ViewModelProvider.Factory = object : ViewModelProvider.Factory{
             override fun <T : ViewModel> create(
@@ -30,9 +34,6 @@ class NotesViewModel(
             }
         }
     }
-/*    fun getNoteById(noteId: Long): note? {
-        return database.notesDao.getNoteById(noteId)
-    }*/
 
     fun onEvent(notesEvent: NotesEvent){
         when(notesEvent){
@@ -44,7 +45,6 @@ class NotesViewModel(
                     database.notesDao.deleteNote(notesEvent.note)
                 }
             }
-            NotesEvent.HideActivity -> TODO()
             NotesEvent.SaveNote -> {
                 val name = _state.value.name
                 val mainText = _state.value.mainText
@@ -93,7 +93,6 @@ class NotesViewModel(
                     tags = notesEvent.tags
                 ) }
             }
-            NotesEvent.ShowActivity -> TODO()
         }
     }
 }
